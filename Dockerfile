@@ -6,7 +6,7 @@ ENV NODE_ENV development
 WORKDIR /usr/src/app
 
 COPY ./package.json package-lock.json ./ 
-RUN npm ci 
+RUN npm ci --legacy-peer-deps 
 
 COPY . .
 
