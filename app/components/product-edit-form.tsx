@@ -146,7 +146,7 @@ export function ProductEditForm({
   const updateMutation = useMutation({
     mutationFn: async (data: { id: string; formData: FormData }) => {
       const response = await axios.put(
-        `http://localhost:8000/v1/api/product/${data.id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/v1/api/product/${data.id}`,
         data.formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

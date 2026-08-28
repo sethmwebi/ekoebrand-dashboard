@@ -8,20 +8,15 @@ import { CheckCircle, Eye, EyeOff, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "~/providers/theme-provider";
 import { useState } from "react";
-import { useAuthStore } from "~/store/auth";
 import { cn } from "~/lib/utils";
 import { Link, useNavigate, type MetaFunction } from "react-router";
 import { useForm } from "react-hook-form";
+import { saveAuth } from "~/helpers/fetcher";
 
 export const meta: MetaFunction = () => {
   return [
-    {
-      title: "Login | Ekoebrand",
-    },
-    {
-      name: "description",
-      content: "Ekoebrand login page",
-    },
+    { title: "Login | Ekoebrand" },
+    { name: "description", content: "Ekoebrand login page" },
   ];
 };
 
@@ -39,7 +34,6 @@ type LoginResponse = {
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
   const { isDarkMode } = useTheme();
 
   const {
@@ -48,33 +42,42 @@ export default function Login() {
     formState: { errors, isValid, touchedFields },
   } = useForm<SigninFormData>({
     resolver: zodResolver(SignInSchema),
-    mode: "onTouched", // Validate on blur or submit
-    reValidateMode: "onChange", // Re-validate as user types to clear errors
+    mode: "onTouched",
+    reValidateMode: "onChange",
   });
 
   const loginMutation = useMutation({
     mutationFn: async (formData: SigninFormData) => {
-      const response = await fetch("http://localhost:8000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          credentials: "include", // important for refreshToken cookie
+          body: JSON.stringify(formData),
+        }
+      );
 
       const data = await response.json();
 
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(data.error || data.message || "Login failed");
+      }
+
       return data as LoginResponse;
     },
-    onSuccess: (data: LoginResponse) => {
-      setAuth(data.user, data.accessToken);
+    onSuccess: (data) => {
+      // Save user + accessToken to localStorage
+      saveAuth(data.user, data.accessToken);
+
       toast(
         <div className="flex items-center gap-x-2">
           <CheckCircle size={28} />
           <div className="flex flex-col">
             <span className="text-sm font-extrabold">Login successful</span>
-            <span>{`Welcome back, ${data.user.name.split(" ")[0]}!`}</span>
           </div>
         </div>,
         {
@@ -87,6 +90,7 @@ export default function Login() {
           },
         }
       );
+
       navigate("/");
     },
     onError: (error: Error) => {
@@ -119,11 +123,18 @@ export default function Login() {
     <div className="flex justify-center items-center w-full h-[100vh]">
       <div className="max-w-4xl flex justify-between w-full h-[100vh] md:h-[90vh] bg-background/90">
         <div className="h-full hidden md:block w-full flex-1">
-          <img className="h-full w-full object-cover" src="/auth-2.jpg" />
+          <img
+            className="h-full w-full object-cover"
+            src="/auth-2.jpg"
+            alt="Auth"
+          />
         </div>
+
         <div className="flex-1 px-8 flex flex-col justify-center">
-          <h4 className="text-2xl font-bold -mt-8 pb-4">Welcome back</h4>
+          <h4 className="text-2xl font-bold -mt-8 pb-4">Ekoebrand Admin</h4>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -144,6 +155,8 @@ export default function Login() {
                 </p>
               )}
             </div>
+
+            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -166,6 +179,7 @@ export default function Login() {
                 </p>
               )}
             </div>
+
             <Button
               type="submit"
               disabled={loginMutation.isPending || !isValid}
@@ -174,6 +188,7 @@ export default function Login() {
               {loginMutation.isPending ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+
           <Link
             to="/register"
             className="text-xs mt-[1px] text-brand-orange cursor-pointer dark:text-brand-orange-dark hover:underline"

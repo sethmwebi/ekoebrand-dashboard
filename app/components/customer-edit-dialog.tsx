@@ -31,7 +31,7 @@ async function checkEmailExists(
 
   try {
     const response = await fetch(
-      "http://localhost:8000/v1/api/users/check-email",
+      `${import.meta.env.VITE_BACKEND_URL}/v1/api/users/check-email`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +81,7 @@ export function CustomerEditDialog({
       }
 
       const response = await fetch(
-        `http://localhost:8000/v1/api/users/${customer.id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/v1/api/users/${customer.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

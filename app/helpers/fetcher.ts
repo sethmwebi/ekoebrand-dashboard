@@ -1,8 +1,43 @@
 import axios from "axios";
-import { useAuthStore } from "~/store/auth";
+
+const AUTH_KEY = "auth";
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  image?: string | null;
+};
+
+type AuthData = {
+  user: AuthUser;
+  accessToken: string;
+};
+
+export function saveAuth(user: AuthUser, accessToken: string) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify({ user, accessToken }));
+}
+
+export function getAuth(): AuthData | null {
+  const raw = localStorage.getItem(AUTH_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as AuthData;
+  } catch {
+    return null;
+  }
+}
+
+export function clearAuth() {
+  localStorage.removeItem(AUTH_KEY);
+}
 
 export const fetcher = async (url: string, options: any = {}) => {
-  const accessToken = useAuthStore.getState().accessToken;
+  const auth = getAuth();
+  const accessToken = auth?.accessToken;
+
   const headers = {
     "Content-Type": "application/json",
     ...options.headers,
@@ -11,31 +46,30 @@ export const fetcher = async (url: string, options: any = {}) => {
 
   try {
     const response = await axios({
-      url: `http://localhost:8000/v1/api${url}`,
+      url: `${import.meta.env.VITE_BACKEND_URL}/v1/api${url}`,
       ...options,
       headers,
       withCredentials: true,
     });
+
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (
+      axios.isAxiosError(error) &&
+      (error.response?.status === 401 || error.response?.status === 403)
+    ) {
       try {
-        // Attempt to refresh the access token
         const refreshResponse = await axios.get(
-          "http://localhost:8000/auth/refresh",
-          {
-            withCredentials: true,
-          }
+          `${import.meta.env.VITE_BACKEND_URL}/auth/refresh`,
+          { withCredentials: true }
         );
 
         const { accessToken: newAccessToken, user } = refreshResponse.data;
 
-        // Update the auth store with the new access token and user
-        useAuthStore.getState().setAuth(user, newAccessToken);
+        saveAuth(user, newAccessToken);
 
-        // Retry the original request with the new access token
         const retryResponse = await axios({
-          url: `http://localhost:8000/v1/api${url}`,
+          url: `${import.meta.env.VITE_BACKEND_URL}/v1/api${url}`,
           ...options,
           headers: {
             ...headers,
@@ -46,16 +80,14 @@ export const fetcher = async (url: string, options: any = {}) => {
 
         return retryResponse.data;
       } catch (refreshError) {
-        // Clear auth state on refresh failure
-        useAuthStore.getState().clearAuth();
+        clearAuth();
         throw new Error("Session expired. Please login again.");
       }
     }
 
-    // Handle other errors
     if (axios.isAxiosError(error) && error.response) {
       const errorData = error.response.data || {};
-      throw new Error(errorData.message || "Request failed");
+      throw new Error(errorData.message || errorData.error || "Request failed");
     }
 
     throw new Error("An unexpected error occurred");

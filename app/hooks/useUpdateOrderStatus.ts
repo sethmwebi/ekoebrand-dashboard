@@ -15,7 +15,9 @@ export function useUpdateOrderStatus() {
   return useMutation({
     mutationFn: async ({ orderId, status }: UpdateOrderStatusParams) => {
       const response = await fetch(
-        `http://localhost:8000/v1/api/admin/orders/${orderId}/status`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/v1/api/admin/orders/${orderId}/status`,
         {
           method: "PATCH",
           headers: {

@@ -94,9 +94,13 @@ export default function ProductsDashboard({}: Route.ComponentProps) {
     queryFn: async () => {
       const [productsResponse, categoriesResponse, tagsResponse] =
         await Promise.all([
-          axios.get<Product[]>("http://localhost:8000/v1/api/products"),
-          axios.get<Category[]>("http://localhost:8000/v1/api/categories"),
-          axios.get<Tag[]>("http://localhost:8000/v1/api/tags"),
+          axios.get<Product[]>(
+            `${import.meta.env.VITE_BACKEND_URL}/v1/api/products`
+          ),
+          axios.get<Category[]>(
+            `${import.meta.env.VITE_BACKEND_URL}/v1/api/categories`
+          ),
+          axios.get<Tag[]>(`${import.meta.env.VITE_BACKEND_URL}/v1/api/tags`),
         ]);
 
       const sortedProducts = [...productsResponse.data].sort(
@@ -117,7 +121,9 @@ export default function ProductsDashboard({}: Route.ComponentProps) {
     mutationFn: async (ids: string[]) => {
       await Promise.all(
         ids.map((id) =>
-          axios.delete(`http://localhost:8000/v1/api/product/${id}`)
+          axios.delete(
+            `${import.meta.env.VITE_BACKEND_URL}/v1/api/product/${id}`
+          )
         )
       );
     },

@@ -42,12 +42,12 @@ export function OrderItemsDialog({
 
   const fetchProducts = async (productIds: string[]): Promise<Product[]> => {
     const promises = productIds.map((productId) =>
-      fetch(`http://localhost:8000/v1/api/products/${productId}`).then(
-        (res) => {
-          if (!res.ok) throw new Error(`Failed to fetch product ${productId}`);
-          return res.json() as Promise<Product>;
-        }
-      )
+      fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/v1/api/products/${productId}`
+      ).then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch product ${productId}`);
+        return res.json() as Promise<Product>;
+      })
     );
     return Promise.all(promises);
   };

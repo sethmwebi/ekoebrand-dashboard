@@ -104,7 +104,9 @@ export function OrdersTable() {
     queryKey: ["orders"],
     queryFn: async (): Promise<Order[]> => {
       const response = await fetch(
-        "http://localhost:8000/v1/api/orders/admin?sort=-createdAt,id"
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/v1/api/orders/admin?sort=-createdAt,id`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch orders");

@@ -4,9 +4,9 @@ import { persist, createJSONStorage } from "zustand/middleware";
 interface User {
   id: string;
   email: string;
-  image: string | null;
   name: string;
   role: string;
+  image?: string | null;
 }
 
 interface AuthState {
@@ -21,12 +21,26 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       accessToken: null,
-      setAuth: (user, accessToken) => set({ user, accessToken }),
-      clearAuth: () => set({ user: null, accessToken: null }),
+
+      setAuth: (user, accessToken) =>
+        set({
+          user,
+          accessToken,
+        }),
+
+      clearAuth: () =>
+        set({
+          user: null,
+          accessToken: null,
+        }),
     }),
     {
-      name: "auth-storage",
+      name: "auth",
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+      }),
     }
   )
 );

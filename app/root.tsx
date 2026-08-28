@@ -7,12 +7,12 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
-import { Toaster } from "sonner";
-import { authMiddleware } from "~/middleware/auth";
+import { authClientMiddleware } from "~/middleware/auth";
 
 import "./app.css";
+import { Toaster } from "./components/ui/sonner";
 
-export const unstable_clientMiddleware = [authMiddleware];
+export const unstable_clientMiddleware = [authClientMiddleware];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

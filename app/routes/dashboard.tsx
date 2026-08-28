@@ -1,13 +1,12 @@
-// app/routes/dashboard.tsx
 import { Check, Cpu, Layers, RefreshCcw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import axios, { AxiosError } from "axios";
 import SummaryBarChart from "~/components/summary-bar-chart";
 import SummaryDoughnutChart from "~/components/summary-doughnut-chart";
 import { LastFiveOrders } from "~/components/last-five-orders";
 import { useTheme } from "~/providers/theme-provider";
 import SummaryCards from "~/components/summary-cards";
 import { CircularProgress } from "@mui/material";
+import { getAuth } from "~/helpers/fetcher";
 
 interface ProcessedProductRevenue {
   id: string;
@@ -45,25 +44,35 @@ export async function clientLoader() {}
 export default function Dashboard() {
   const { isDarkMode } = useTheme();
 
-  const fetchDashboardData = async (): Promise<DashboardData> => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8000/v1/api/dashboard`
+  const { data, isLoading, error } = useQuery<DashboardData, Error>({
+    queryKey: ["dashboard-data"],
+    queryFn: async () => {
+      const auth = getAuth();
+      const accessToken = auth?.accessToken;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/v1/api/dashboard`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          credentials: "include",
+        }
       );
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          error.response?.data?.message || "Failed to fetch dashboard data"
+          errorData.message ||
+            errorData.error ||
+            "Failed to fetch dashboard data"
         );
       }
-      throw new Error("Failed to fetch dashboard data");
-    }
-  };
 
-  const { data, isLoading, error } = useQuery<DashboardData, AxiosError>({
-    queryKey: ["dashboard-data", "orders"],
-    queryFn: fetchDashboardData,
+      return response.json();
+    },
   });
 
   if (isLoading) {
@@ -84,10 +93,6 @@ export default function Dashboard() {
     );
   }
 
-  console.log(data?.categoriesRevenue);
-  console.log(data?.topRevenueProducts);
-
-  // Prepare chart data with colors
   const chartData: ChartProduct[] =
     data?.topRevenueProducts?.map((product, index) => ({
       ...product,
@@ -120,16 +125,12 @@ export default function Dashboard() {
           value={data?.deliveredOrders || 0}
         />
       </div>
+
       <div className="md:h-[60vh] w-full flex flex-col lg:flex-row gap-4 mb-4">
         <div className="flex-1 md:h-full">
           <SummaryBarChart
-            //            data={data?.categoriesRevenue || []}
-            data={[
-              { category: "Apparel", revenue: 12500 },
-              { category: "Accessories", revenue: 8500 },
-              { category: "Bags", revenue: 6200 },
-            ]}
-            title="Monthly Revenue by Category"
+            data={data?.categoriesRevenue || []}
+            title="Revenue by Category"
             height="400px"
             barColor="#4f46e5"
             currencySymbol="KES"
@@ -145,6 +146,7 @@ export default function Dashboard() {
           />
         </div>
       </div>
+
       <div className="w-full mt-8">
         <LastFiveOrders productsWithStats={data?.productsWithStats || []} />
       </div>

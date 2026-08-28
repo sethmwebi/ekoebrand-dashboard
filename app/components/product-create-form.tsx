@@ -107,7 +107,7 @@ export function ProductCreateForm({
   const createProductMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const response = await axios.post(
-        "http://localhost:8000/v1/api/product",
+        `${import.meta.env.VITE_BACKEND_URL}/v1/api/product`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

@@ -65,7 +65,7 @@ export default function DashboardLayout() {
   const handleLogout = async () => {
     try {
       // Call your backend logout endpoint
-      await fetch("http:localhost:8000/auth/logout", {
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

@@ -68,7 +68,9 @@ export function CustomersTable() {
     queryKey: ["customers"],
     queryFn: async (): Promise<Customer[]> => {
       const response = await fetch(
-        "http://localhost:8000/v1/api/users?role=USER&sort=-createdAt,id"
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/v1/api/users?role=USER&sort=-createdAt,id`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch customers");
