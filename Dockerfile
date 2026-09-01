@@ -2,7 +2,8 @@ ARG NODE_VERSION=22.9.0
 
 FROM node:${NODE_VERSION}-alpine
 
-ENV NODE_ENV development
+#ENV NODE_ENV development
+
 WORKDIR /usr/src/app
 
 COPY ./package.json package-lock.json ./ 
@@ -12,4 +13,4 @@ COPY . .
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
